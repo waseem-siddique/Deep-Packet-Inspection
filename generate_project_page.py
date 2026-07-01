@@ -1,10 +1,3 @@
-# generate_project_page.py
-"""
-Generates a professional project overview page:
-- Mohammed Waseem Siddique's name and photo at top
-- Description of the DPI system
-- Contact / investment message
-"""
 import base64
 import os
 
