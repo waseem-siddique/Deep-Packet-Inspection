@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPI Dashboard - Mohammed Waseem Siddique</title>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f1923;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .header {
+            background: #1a2733;
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #2d4a5e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.5rem; color: #4fc3f7; }
+        .header p { font-size: 0.85rem; color: #90a4ae; margin-top: 0.25rem; }
+        .controls button {
+            padding: 0.6rem 1.5rem;
+            margin-left: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .btn-start { background: #2e7d32; color: white; }
+        .btn-stop { background: #c62828; color: white; }
+        .btn-start:hover { background: #388e3c; }
+        .btn-stop:hover { background: #d32f2f; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+        .stat-card {
+            background: #1a2733;
+            border: 1px solid #2d4a5e;
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .stat-card h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #90a4ae;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 0 1.5rem 1.5rem;
+        }
+        .chart-card {
+            background: #1a2733;
+            border: 1px solid #2d4a5e;
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .chart-card h3 {
+            color: #90a4ae;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .alerts-section {
+            padding: 0 1.5rem 1.5rem;
+        }
+        .alerts-table {
+            width: 100%;
+            background: #1a2733;
+            border: 1px solid #2d4a5e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .alerts-table h3 {
+            padding: 1rem 1.25rem;
+            color: #90a4ae;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #2d4a5e;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th {
+            text-align: left;
+            padding: 0.75rem 1.25rem;
+            color: #90a4ae;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #2d4a5e;
+        }
+        td { padding: 0.6rem 1.25rem; border-bottom: 1px solid #1e2d3a; }
+        .severity-critical { color: #ef5350; font-weight: 700; }
+        .severity-high { color: #ff7043; font-weight: 600; }
+        .severity-medium { color: #ffa726; }
+        .severity-low { color: #66bb6a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Deep Packet Inspection Dashboard</h1>
+            <p>Developed by Mohammed Waseem Siddique</p>
+        </div>
+        <div class="controls">
+            <button class="btn-start" onclick="startEngine()">Start Capture</button>
+            <button class="btn-stop" onclick="stopEngine()">Stop Capture</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="stat-card">
+            <h3>Packets Processed</h3>
+            <div class="value" id="packet-count">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Threats Detected</h3>
+            <div class="value" id="threat-count" style="color: #ef5350;">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Unique Source IPs</h3>
+            <div class="value" id="src-ips">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Uptime</h3>
+            <div class="value" id="uptime" style="font-size: 1.5rem;">--</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Protocol Distribution</h3>
+            <canvas id="protocol-chart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Threat Severity Breakdown</h3>
+            <canvas id="severity-chart"></canvas>
+        </div>
+    </div>
+
+    <div class="alerts-section">
+        <div class="alerts-table">
+            <h3>Recent Alerts</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Threat</th>
+                        <th>Severity</th>
+                    </tr>
+                </thead>
+                <tbody id="alerts-body">
+                    <tr><td colspan="5" style="text-align:center;color:#90a4ae;">No alerts yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let protocolChart, severityChart;
+
+        function initCharts() {
+            const darkOptions = {
+                plugins: { legend: { labels: { color: '#90a4ae' } } },
+                scales: {
+                    x: { ticks: { color: '#90a4ae' }, grid: { color: '#1e2d3a' } },
+                    y: { ticks: { color: '#90a4ae' }, grid: { color: '#1e2d3a' } }
+                }
+            };
+
+            protocolChart = new Chart(document.getElementById('protocol-chart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Waiting...'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#2d4a5e'],
+                    }]
+                },
+                options: darkOptions
+            });
+
+            severityChart = new Chart(document.getElementById('severity-chart'), {
+                type: 'bar',
+                data: {
+                    labels: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#ef5350', '#ff7043', '#ffa726', '#66bb6a'],
+                    }]
+                },
+                options: {
+                    ...darkOptions,
+                    scales: {
+                        ...darkOptions.scales,
+                        y: { ...darkOptions.scales.y, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updateStats(data) {
+            document.getElementById('packet-count').textContent = data.packets_processed || 0;
+            const totalThreats = Object.values(data.threats || {}).reduce((a, b) => a + b, 0);
+            document.getElementById('threat-count').textContent = totalThreats;
+            document.getElementById('src-ips').textContent = data.unique_src_ips || 0;
+            document.getElementById('uptime').textContent = data.uptime || '--';
+
+            // Update protocol chart
+            const protocols = data.protocols || {};
+            protocolChart.data.labels = Object.keys(protocols).length ? Object.keys(protocols) : ['None'];
+            protocolChart.data.datasets[0].data = Object.keys(protocols).length
+                ? Object.values(protocols)
+                : [1];
+            protocolChart.update();
+
+            // Update severity chart
+            const severity = data.severity_counts || {};
+            severityChart.data.datasets[0].data = [
+                severity['CRITICAL'] || 0,
+                severity['HIGH'] || 0,
+                severity['MEDIUM'] || 0,
+                severity['LOW'] || 0,
+            ];
+            severityChart.update();
+
+            // Update alerts table
+            const alerts = data.alerts || [];
+            const tbody = document.getElementById('alerts-body');
+            if (alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#90a4ae;">No alerts yet</td></tr>';
+            } else {
+                tbody.innerHTML = alerts.slice(-20).reverse().map(a => `
+                    <tr>
+                        <td>${a.timestamp ? a.timestamp.split('T')[1].split('.')[0] : ''}</td>
+                        <td>${a.src_ip || ''}</td>
+                        <td>${a.dst_ip || ''}</td>
+                        <td>${a.threat || ''}</td>
+                        <td class="severity-${(a.severity || '').toLowerCase()}">${a.severity || ''}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function startEngine() {
+            fetch('/api/start', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => console.log('Engine:', d.status));
+        }
+
+        function stopEngine() {
+            fetch('/api/stop', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => console.log('Engine:', d.status));
+        }
+
+        socket.on('stats', updateStats);
+        socket.on('packet', (p) => console.log('Packet:', p.protocol, p.src_ip, '->', p.dst_ip));
+
+        initCharts();
+    </script>
+</body>
+</html>

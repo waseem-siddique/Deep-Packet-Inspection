@@ -1,0 +1,33 @@
+rules:
+  - name: "Block Traffic to Malicious IPs"
+    severity: "CRITICAL"
+    action: "alert"
+    message: "Traffic to known malicious IP detected"
+    conditions:
+      dst_ip: "10.0.0.99"
+    logic: "OR"
+
+  - name: "Unencrypted Credentials"
+    severity: "HIGH"
+    action: "alert"
+    message: "Unencrypted credentials transmitted over HTTP"
+    conditions:
+      protocol: "HTTP"
+      details: "PASS"
+    logic: "AND"
+
+  - name: "Large DNS Query"
+    severity: "LOW"
+    action: "log"
+    message: "Unusually large DNS query detected"
+    conditions:
+      protocol: "DNS"
+    logic: "AND"
+
+  - name: "Suspicious Port Activity"
+    severity: "MEDIUM"
+    action: "alert"
+    message: "Traffic on non-standard port"
+    conditions:
+      dst_port: "4444"
+    logic: "OR"

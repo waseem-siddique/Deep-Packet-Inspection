@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  dpi-engine:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: dpi-engine
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - DPI_INTERFACE=eth0
+      - DPI_OUTPUT=/app/data/dpi_report.csv
+    volumes:
+      - ../data:/app/data
+      - ../dpi/detection/custom_rules.yaml:/app/dpi/detection/custom_rules.yaml
+    command: >
+      -i ${DPI_INTERFACE:-eth0}
+      --dashboard
+      --api
+      -o /app/data/dpi_report.csv
+    restart: unless-stopped
+
+  dpi-dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: dpi-dashboard
+    network_mode: host
+    environment:
+      - DPI_INTERFACE=eth0
+    command: >
+      -i ${DPI_INTERFACE:-eth0}
+      --dashboard
+      --dashboard-port 5000
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    profiles:
+      - dashboard
+
+  dpi-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: dpi-api
+    network_mode: host
+    environment:
+      - DPI_INTERFACE=eth0
+    command: >
+      -i ${DPI_INTERFACE:-eth0}
+      --api
+      --api-port 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    profiles:
+      - api

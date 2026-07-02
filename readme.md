@@ -1,113 +1,58 @@
-# 🔍 Deep Packet Inspection (DPI) Engine
+# Deep Packet Inspection Engine
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
-[![Scapy](https://img.shields.io/badge/Scapy-2.5.0%2B-green.svg)](https://scapy.net/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+A high-performance **Deep Packet Inspection (DPI)** engine designed to analyze network traffic in real time and perform offline forensic analysis using PCAP files. The application identifies application-layer protocols and detects potentially malicious network activity through signature-based threat detection.
 
-A production-ready **Deep Packet Inspection** engine for real-time network traffic analysis and offline PCAP forensics. Built with Python and Scapy, featuring protocol detection, signature-based threat identification, and structured reporting.
-
-![DPI Banner](https://img.shields.io/badge/DPI-Engine-red?style=for-the-badge)
+Developed by **Mohammed Waseem Siddique**.
 
 ---
 
-## 👨‍💻 Developer
+# About the Developer
 
-<table>
-  <tr>
-    <td align="center">
-      <img src="photo.jpg" width="120px" height="120px" style="border-radius:50%"/><br>
-      <strong>Mohammed Waseem Siddique</strong><br>
-      <em>Cybersecurity & Network Intelligence Engineer</em>
-    </td>
-  </tr>
-</table>
+Hi, I'm **Mohammed Waseem Siddique**, a Computer Science student with a strong interest in **Cybersecurity, Network Security, Threat Detection, and Software Development**.
 
-> 🔥 **Open to impactful opportunities** — Ready to invest my time into challenging projects in network security, backend engineering, and system design.
+This project was built to demonstrate practical knowledge of packet analysis, protocol identification, and intrusion detection while applying real-world networking concepts in a production-style application.
+
+I'm passionate about building secure, scalable, and impactful software solutions, and I'm always eager to learn new technologies and contribute to meaningful projects.
 
 ---
 
-## 📋 Table of Contents
+# Project Overview
 
-- [Features](#-features)
-- [Architecture](#-architecture)
-- [Demo](#-demo)
-- [Installation](#-installation)
-- [Usage](#-usage)
-- [Project Structure](#-project-structure)
-- [Threat Signatures](#-threat-signatures)
-- [Technologies Used](#-technologies-used)
-- [Results & Output](#-results--output)
-- [Future Enhancements](#-future-enhancements)
-- [Contributing](#-contributing)
-- [Contact](#-contact)
+The **Deep Packet Inspection Engine** provides both live network monitoring and offline packet analysis to help identify network protocols and detect suspicious or malicious traffic patterns.
 
----
+### Key Features
 
-## ✨ Features
+* Capture and inspect live network traffic from any available network interface.
+* Analyze PCAP files for offline investigation and digital forensics.
+* Automatically identify common application-layer protocols, including:
 
-### Core Capabilities
-- 🔴 **Live Packet Capture** — Sniff traffic on any network interface in real-time
-- 🔵 **Offline PCAP Analysis** — Forensic analysis of pre-recorded packet captures
-- 🟢 **Protocol Detection** — Identifies HTTP, DNS, TLS (SNI), SSH, FTP
-- 🟡 **Threat Intelligence** — Signature-based detection of 6+ attack patterns
-- 📊 **CSV Reporting** — Structured logging with timestamps, IPs, and severity levels
+  * HTTP
+  * DNS
+  * TLS (including Server Name Indication (SNI) extraction)
+  * SSH
+  * FTP
+* Detect known attack signatures using pattern matching, including:
 
-### Security Detection
-| Threat Type | Pattern | Severity |
-|-------------|---------|----------|
-| SQL Injection | `UNION SELECT`, `' OR '1'='1` | 🔴 CRITICAL |
-| XSS Attacks | `<script>`, `javascript:` | 🔴 CRITICAL |
-| Reverse Shells | `/bin/bash`, `nc -e` | 🟠 HIGH |
-| Command Injection | `cmd.exe`, encoded PowerShell | 🟠 HIGH |
-| Suspicious User-Agent | `curl`, `wget`, `python-requests` | 🟡 LOW |
+  * SQL Injection
+  * Cross-Site Scripting (XSS)
+  * Command Injection
+  * Reverse Shell payloads
+* Generate structured CSV reports containing:
+
+  * Timestamp
+  * Source and Destination IP Addresses
+  * Detected Protocol
+  * Threat Severity
+  * Detection Details
 
 ---
 
-## 🏗 Architecture
-┌─────────────────────────────────────────────────────────┐
-│ DPI ENGINE │
-│ │
-│ ┌──────────────┐ ┌──────────────┐ ┌────────────┐ │
-│ │ Packet │ │ Protocol │ │ Signature │ │
-│ │ Capture │──▶│ Detector │──▶│ Matcher │ │
-│ │ (Scapy) │ │ (HTTP/DNS) │ │ (Regex) │ │
-│ └──────────────┘ └──────────────┘ └────────────┘ │
-│ │ │
-│ ┌────────▼─────┐│
-│ │ CSV Logger ││
-│ └──────────────┘│
-└─────────────────────────────────────────────────────────┘
+# Installation
 
-### Design Patterns
-- **Modular Architecture** — Each component is independent and testable
-- **Strategy Pattern** — Protocol detectors implement consistent interfaces
-- **Observer Pattern** — Logger observes and records all detection events
-- **Separation of Concerns** — Config, detection, matching, and logging are isolated
+Clone the repository and install the required dependencies.
 
----
-
-## 🎮 Demo
-
-### Live Capture Mode
 ```bash
-$ sudo python main.py -i eth0
-
-    ____  ___   ____    ____  _  _______   ____
-   / __ \/   | / __ \  / __ \/ |/ / ___/  /  _/
-  / /_/ / /| |/ /_/ / / /_/ /    / /__  _/ /  
- / ____/ ___ / ____/ / ____/ /|  / /_/  / /   
-/_/   /_/  |_/_/     /_/   /_/ |_/_____/ /___/ 
-
-============================================================
-   Developed by: Mohammed Waseem Siddique
-   Ready to invest my time into more projects
-   and real-world impactful opportunities.
-============================================================
-
-INFO - Sniffing on interface eth0 ... (Ctrl+C to stop)
-INFO - HTTP | 192.168.1.100 -> 93.184.216.34 [HTTP] Request GET example.com/
-INFO - DNS | 192.168.1.100 -> 8.8.8.8 [DNS] Query google.com
-🚨 Threat detected: SQL Injection attempt from 10.0.0.5 to 192.168.1.10
-
-PCAP Analysis
-$ python main.py -r suspicious_traffic.pcap -o forensic_report.csv
+git clone https://github.com/yourusername/deep-packet-inspection.git
+cd deep-packet-inspection
+pip install -r requirements.txt
+```
