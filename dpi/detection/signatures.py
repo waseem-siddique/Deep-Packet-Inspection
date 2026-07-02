@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Tuple
 
 
@@ -14,7 +14,7 @@ class Signature:
 class SignatureMatcher:
     """Matches packet payloads against threat signatures."""
 
-    SIGNATURES: List[Signature] = field(default_factory=lambda: [
+    SIGNATURES = [
         Signature(
             "SQL Injection",
             r"(?i)(UNION\s+SELECT|SELECT\s+.*\s+FROM|'\s*OR\s+'1'='1|OR\s+1=1--)",
@@ -63,16 +63,13 @@ class SignatureMatcher:
             "MEDIUM",
             "Possible data exfiltration"
         ),
-    ])
+    ]
 
     def __init__(self):
         self.signatures = self.SIGNATURES
         self.compiled = [(sig, re.compile(sig.pattern)) for sig in self.signatures]
 
     def match(self, payload: str) -> List[Tuple[str, str, str]]:
-        """Match payload against all signatures.
-        Returns list of (name, severity, description) tuples.
-        """
         if not payload:
             return []
 
@@ -84,7 +81,6 @@ class SignatureMatcher:
         return matches
 
     def add_signature(self, name: str, pattern: str, severity: str, description: str):
-        """Add a custom signature at runtime."""
         sig = Signature(name, pattern, severity, description)
         self.signatures.append(sig)
         self.compiled.append((sig, re.compile(pattern)))
